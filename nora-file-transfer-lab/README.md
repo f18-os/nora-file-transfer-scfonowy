@@ -17,11 +17,11 @@ Much of the transfer/receive/thread code was provided by Dr. Freudenthal or samp
 ## Running Instructions
 To run the lab, simply download or clone the repository and run the server script using `python3`. For example:
 
-`python3 nora-file-transfer-lab/framedFileThreadServer.py` or `./file-transfer-lab/framedFileThreadServer.py`
+`python3 nora-file-transfer-lab/framedFileThreadServer.py` or `./nora-file-transfer-lab/framedFileThreadServer.py`
 
 Then, start any number of clients in a similar fashion:
 
-`python3 file-transfer-lab/framedFileThreadClient.py` or `./file-transfer-lab/framedFileThreadClient.py`
+`python3 nora-file-transfer-lab/framedFileThreadClient.py` or `./nora-file-transfer-lab/framedFileThreadClient.py`
 
 You may also wish to use the stammer proxy provided. To do so, simply run the proxy and change the port that the client connects to, either by editing the script or using the server flag.
 
