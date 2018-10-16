@@ -1,5 +1,6 @@
 from framedSock import FramedStreamSock
 import re, os
+from threading import RLock
 from enum import Enum
 
 # enum for what state we're in when receiving a file
@@ -60,7 +61,6 @@ class FramedFileStreamSock(FramedStreamSock):
         return payload
     ### END CODE CITED FROM PROVIDED CODE
 
-### BEGIN CODE CITED FROM PREVIOUS ASSIGNMENT
     # function that sends a file 100 bytes at a time. sampled from framedSend
     def send_file(self, filename):
         # check if file exists
@@ -101,7 +101,7 @@ class FramedFileStreamSock(FramedStreamSock):
 
         
     # function that receives a file over the network. makes use of framedReceive.
-    def receive_file(self, directory):
+    def receive_file(self, directory, file_locks):
         # NOTE: this is kind of overengineered. there's no need for a loop here, but i thought
         # the problem would be more involved than it was, and was too lazy to refactor it. :(
         state = FileReceiveState.NAME # set first state of 
@@ -117,24 +117,26 @@ class FramedFileStreamSock(FramedStreamSock):
                     state = FileReceiveState.ERROR
                     print("FileReceive: file already exists. \n")
                 else:
-                    filename = str(filename.decode())
+                    filename = os.path.abspath(directory + str(filename.decode()))
+                    if filename not in file_locks:
+                        file_locks[filename] = RLock() # create lock for file
                     state = FileReceiveState.FILE
                     if self.debug: print("FileReceive: ready to receive file %s" % (filename))
             
             elif state == FileReceiveState.FILE: # get file using framedReceive
-                fileBytes = self.receivemsg()
-                if fileBytes == None:
-                    state = FileReceiveState.ERROR
-                    print("FileReceive: error receiving file. \n")
-                else:
-                    try: # write file to system
-                        outputFile = open(directory + filename, "wb")
-                        outputFile.write(fileBytes)
-                        outputFile.close()
-                        state = FileReceiveState.COMPLETE
-                    except Exception as e:
+                with file_locks[filename]: # ensure no other thread is accessing the file
+                    fileBytes = self.receivemsg()
+                    if fileBytes == None:
                         state = FileReceiveState.ERROR
-                        print("FileReceive: error writing file: " + str(e))
+                        print("FileReceive: error receiving file. \n")
+                    else:
+                        try: # write file to system
+                            outputFile = open(filename, "wb")
+                            outputFile.write(fileBytes)
+                            outputFile.close()
+                            state = FileReceiveState.COMPLETE
+                        except Exception as e:
+                            state = FileReceiveState.ERROR
+                            print("FileReceive: error writing file: " + str(e))
 
             self.sendmsg(str(state.value).encode()) # indicate error/ready to continue
-### END CODE CITED FROM PREVIOUS ASSIGNMENT

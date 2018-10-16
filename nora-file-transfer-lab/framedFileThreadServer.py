@@ -25,6 +25,7 @@ lsock.listen(5)
 print("listening on:", bindAddr)
 class ServerThread(Thread):
     receiptDirectory = "./received_files/" # directory used to store files
+    file_locks = {}
     def __init__(self, sock, debug):
         Thread.__init__(self, daemon=True)
         self.fsock, self.debug = FramedFileStreamSock(sock, debug), debug
@@ -35,7 +36,7 @@ class ServerThread(Thread):
         while True:
             try:
                 if self.debug: print("awaiting file")
-                self.fsock.receive_file(ServerThread.receiptDirectory)
+                self.fsock.receive_file(ServerThread.receiptDirectory, self.file_locks)
             except Exception as e: # most likely, client disconnected
                 print("connection closed: " + str(e))
                 quit()
