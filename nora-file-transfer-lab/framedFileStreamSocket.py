@@ -113,13 +113,16 @@ class FramedFileStreamSock(FramedStreamSock):
                 if filename == None:
                     state = FileReceiveState.ERROR
                     print("FileReceive: unable to read filename. \n")
-                elif os.path.isfile(directory + str(filename.decode())):
-                    state = FileReceiveState.ERROR
-                    print("FileReceive: file already exists. \n")
+                ### old behavior, return error on uploading duplicate file
+                # elif os.path.isfile(directory + str(filename.decode())):
+                #     state = FileReceiveState.ERROR
+                #     print("FileReceive: file already exists. \n")
                 else:
-                    filename = os.path.abspath(directory + str(filename.decode()))
+                    filename = os.path.abspath(directory + str(filename.decode())) # get FQ path name
                     if filename not in file_locks:
+                        if self.debug: print("FileReceive: created lock for %s" % (filename))
                         file_locks[filename] = RLock() # create lock for file
+                    elif self.debug: print("FileReceive: lock already exists for %s" % (filename))
                     state = FileReceiveState.FILE
                     if self.debug: print("FileReceive: ready to receive file %s" % (filename))
             
